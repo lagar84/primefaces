@@ -38,6 +38,7 @@ PrimeFaces.widget.TreeTable = PrimeFaces.widget.DeferredWidget.extend({
     
     refresh: function(cfg) {
         this.columnWidthsFixed = false;
+        this.scrollStateVal = this.scrollStateHolder ? this.scrollStateHolder.val() : null;
         this.init(cfg);
     },
     
@@ -966,6 +967,8 @@ PrimeFaces.widget.TreeTable = PrimeFaces.widget.DeferredWidget.extend({
         this.footerTable = this.scrollFooterBox.children('table');
         this.headerCols = this.headerTable.find('> thead > tr > th');
         this.footerCols = this.footerTable.find('> tfoot > tr > td');
+        this.percentageScrollHeight = this.cfg.scrollHeight && (this.cfg.scrollHeight.indexOf('%') !== -1);
+        this.percentageScrollWidth = this.cfg.scrollWidth && (this.cfg.scrollWidth.indexOf('%') !== -1);
         var $this = this;
         
         if(this.cfg.scrollHeight) {
@@ -1028,7 +1031,7 @@ PrimeFaces.widget.TreeTable = PrimeFaces.widget.DeferredWidget.extend({
             var header = $(this);
             header.attr('id', header.attr('id') + '_clone');
         });
-        this.theadClone.removeAttr('id').addClass('ui-treetable-scrollable-theadclone').height(0).prependTo(this.bodyTable);
+        this.theadClone.removeAttr('id').addClass('ui-treetable-scrollable-theadclone').hide().prependTo(this.bodyTable);
     },
     
      fixColumnWidths: function() {
@@ -1058,6 +1061,15 @@ PrimeFaces.widget.TreeTable = PrimeFaces.widget.DeferredWidget.extend({
             
             this.columnWidthsFixed = true;
         }
+    },
+    
+    updateColumnWidths: function() {
+        this.columnWidthsFixed = false;
+        this.jq.find('> table > thead > tr > th').each(function() {
+            var col = $(this);
+            col.css('width', '');
+        });
+        this.fixColumnWidths();
     },
 
     adjustScrollHeight: function() {
@@ -1108,11 +1120,12 @@ PrimeFaces.widget.TreeTable = PrimeFaces.widget.DeferredWidget.extend({
     },
             
     restoreScrollState: function() {
-        var scrollState = this.scrollStateHolder.val(),
+        var scrollState = this.scrollStateVal||this.scrollStateHolder.val(),
         scrollValues = scrollState.split(',');
 
         this.scrollBody.scrollLeft(scrollValues[0]);
         this.scrollBody.scrollTop(scrollValues[1]);
+        this.scrollStateVal = null;
     },
     
     saveScrollState: function() {
@@ -1443,7 +1456,7 @@ PrimeFaces.widget.TreeTable = PrimeFaces.widget.DeferredWidget.extend({
     },
     
     tabCell: function(cell, forward) {
-        var targetCell = forward ? cell.next() : cell.prev();
+        var targetCell = forward ? cell.nextAll('td.ui-editable-column:first') : cell.prevAll('td.ui-editable-column:first');
         if(targetCell.length == 0) {
             var tabRow = forward ? cell.parent().next() : cell.parent().prev();
             targetCell = forward ? tabRow.children('td.ui-editable-column:first') : tabRow.children('td.ui-editable-column:last');

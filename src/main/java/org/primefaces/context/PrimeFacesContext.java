@@ -1,5 +1,5 @@
-/*
- * Copyright 2009-2015 PrimeTek.
+/**
+ * Copyright 2009-2017 PrimeTek.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,19 +18,31 @@ package org.primefaces.context;
 import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
 import javax.faces.context.FacesContextWrapper;
+import javax.faces.context.ResponseWriter;
+import org.primefaces.application.resource.CollectScriptsResponseWriter;
+import org.primefaces.application.resource.CollectScriptsState;
 
 /**
  * Custom {@link FacesContextWrapper} to init and release our {@link RequestContext}.
  */
 public class PrimeFacesContext extends FacesContextWrapper {
-    
+
     private final FacesContext wrapped;
+    private final boolean collectScripts;
+
+    private CollectScriptsState collectScriptsState;
     private PrimeExternalContext externalContext;
-	
+
     public PrimeFacesContext(FacesContext wrapped) {
         this.wrapped = wrapped;
 
-        RequestContext.setCurrentInstance(new DefaultRequestContext(wrapped), wrapped);
+        RequestContext requestContext = new DefaultRequestContext(wrapped);
+        RequestContext.setCurrentInstance(requestContext, wrapped);
+        
+        collectScripts = requestContext.getApplicationContext().getConfig().isCollectScripts();
+        if (collectScripts) {
+            collectScriptsState = new CollectScriptsState();
+        }
     }
 
     @Override
@@ -40,12 +52,22 @@ public class PrimeFacesContext extends FacesContextWrapper {
         }
         return externalContext;
     }
+
+    @Override
+    public void setResponseWriter(ResponseWriter writer) {
+        if (!getPartialViewContext().isAjaxRequest() && collectScripts && !(writer instanceof CollectScriptsResponseWriter)) {
+            getWrapped().setResponseWriter(new CollectScriptsResponseWriter(writer, collectScriptsState));
+        }
+        else {
+            getWrapped().setResponseWriter(writer);
+        }
+    }
     
     @Override
     public FacesContext getWrapped() {
         return wrapped;
     }
-	
+
     @Override
     public void release() {
         RequestContext requestContext = RequestContext.getCurrentInstance(wrapped);

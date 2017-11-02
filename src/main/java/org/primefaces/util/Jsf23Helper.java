@@ -1,5 +1,5 @@
-/*
- * Copyright 2009-2014 PrimeTek.
+/**
+ * Copyright 2009-2017 PrimeTek.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.primefaces.component.api;
+package org.primefaces.util;
 
 import javax.faces.context.FacesContext;
+import org.primefaces.expression.impl.Jsf23WidgetVarSearchKeywordResolver;
 
-/**
- * For Components that support auto updating
- */
-public interface AutoUpdatable {
+// helper to avoid java.lang.NoClassDefFoundError's in older environments
+public class Jsf23Helper {
     
-    public boolean isAutoUpdate();
-    
-    public String getClientId(FacesContext context);
+    public static void addSearchKeywordResolvers() {
+        FacesContext.getCurrentInstance()
+                            .getApplication()
+                            .addSearchKeywordResolver(new Jsf23WidgetVarSearchKeywordResolver());
+    }
 }

@@ -272,6 +272,9 @@ PrimeFaces.widget.AutoComplete = PrimeFaces.widget.BaseWidget.extend({
                     }
                 }
             }
+            
+            $this.checkMatchedItem = true;
+            
         }).on('keydown.autoComplete', function(e) {
             var keyCode = $.ui.keyCode;
 
@@ -371,7 +374,10 @@ PrimeFaces.widget.AutoComplete = PrimeFaces.widget.BaseWidget.extend({
                 };
             }
 
-        });
+        }).on('paste.autoComplete', function() {
+			$this.suppressInput = false;
+            $this.checkMatchedItem = true;
+		});
     },
 
     bindDynamicEvents: function() {
@@ -496,6 +502,12 @@ PrimeFaces.widget.AutoComplete = PrimeFaces.widget.BaseWidget.extend({
                 $this.timeout = null;
                 $this.search(value);
             }, delay);
+        }
+        else if(value.length === 0) {
+            if($this.timeout) {
+                $this.deleteTimeout();
+            }
+            $this.fireClearEvent();
         }
     },
 
@@ -787,6 +799,14 @@ PrimeFaces.widget.AutoComplete = PrimeFaces.widget.BaseWidget.extend({
                     $this.hinput.val('');
                 }
             }
+            
+            if(valid && $this.checkMatchedItem) {   
+                var selectedItem = $this.items.filter('[data-item-label="' + value + '"]');
+                if (selectedItem.length) {
+                    selectedItem.click();
+                }
+                $this.checkMatchedItem = false;
+            }
         });
     },
 
@@ -925,6 +945,14 @@ PrimeFaces.widget.AutoComplete = PrimeFaces.widget.BaseWidget.extend({
     deleteTimeout: function() {
         clearTimeout(this.timeout);
         this.timeout = null;
+    },
+    
+    fireClearEvent: function() {
+        if(this.hasBehavior('clear')) {
+            var clearBehavior = this.cfg.behaviors['clear'];
+            
+            clearBehavior.call(this);
+        }
     }
 
 });

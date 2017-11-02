@@ -15,6 +15,7 @@ import org.primefaces.event.NodeUnselectEvent;
 import org.primefaces.event.NodeExpandEvent;
 import org.primefaces.event.NodeCollapseEvent;
 import org.primefaces.event.ColumnResizeEvent;
+import org.primefaces.event.data.PageEvent;
 import org.primefaces.component.column.Column;
 import java.lang.StringBuilder;
 import java.util.ArrayList;
@@ -35,6 +36,7 @@ import org.primefaces.event.RowEditEvent;
 import org.primefaces.event.data.SortEvent;
 import org.primefaces.model.SortOrder;
 import org.primefaces.util.ComponentUtils;
+import org.primefaces.util.LocaleUtils;
 import javax.faces.event.BehaviorEvent;
 import org.primefaces.component.api.UIData;
 import org.primefaces.model.filter.ContainsFilterConstraint;
@@ -124,6 +126,7 @@ import org.primefaces.model.filter.StartsWithFilterConstraint;
         put("rowEditInit", RowEditEvent.class);
         put("rowEditCancel", RowEditEvent.class);
         put("cellEdit", CellEditEvent.class);
+        put("page", PageEvent.class);
     }});
 
     private static final Collection<String> EVENT_NAMES = BEHAVIOR_EVENT_MAPPING.keySet();
@@ -249,6 +252,14 @@ import org.primefaces.model.filter.StartsWithFilterConstraint;
                 wrapperEvent = new CellEditEvent(this, behaviorEvent.getBehavior(), column, rowKey);
                 wrapperEvent.setPhaseId(behaviorEvent.getPhaseId());
             }
+            else if(eventName.equals("page")) {
+                int rows = this.getRowsToRender();
+                int first = Integer.parseInt(params.get(clientId + "_first"));
+                int page = rows > 0 ? (int) (first / rows) : 0;
+        
+                wrapperEvent = new PageEvent(this, behaviorEvent.getBehavior(), page);
+                wrapperEvent.setPhaseId(behaviorEvent.getPhaseId());
+            }
             
             super.queueEvent(wrapperEvent);
         }
@@ -364,19 +375,7 @@ import org.primefaces.model.filter.StartsWithFilterConstraint;
 
     public Locale resolveDataLocale() {
         FacesContext context = this.getFacesContext();
-        Object userLocale = this.getDataLocale();
-        
-        if(userLocale != null) {
-            if(userLocale instanceof String)
-                return ComponentUtils.toLocale((String) userLocale);
-            else if(userLocale instanceof java.util.Locale)
-                return (java.util.Locale) userLocale;
-            else
-                throw new IllegalArgumentException("Type:" + userLocale.getClass() + " is not a valid locale type for datatable:" + this.getClientId(context));
-        } 
-        else {
-            return context.getViewRoot().getLocale();
-        }
+        return LocaleUtils.resolveLocale(this.getDataLocale(), this.getClientId(context));
     }
 
     public ColumnGroup getColumnGroup(String target) {

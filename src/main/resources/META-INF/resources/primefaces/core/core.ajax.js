@@ -19,7 +19,6 @@ if (!PrimeFaces.ajax) {
         'psf': 'partialSubmitFilter',
         'rv': 'resetValues',
         'fi': 'fragmentId',
-        'fu': 'fragmentUpdate',
         'pa': 'params',
         'onst': 'onstart',
         'oner': 'onerror',
@@ -424,9 +423,6 @@ if (!PrimeFaces.ajax) {
 
                 //update
                 var updateArray = PrimeFaces.ajax.Request.resolveComponentsForAjaxCall(cfg, 'update');
-                if(cfg.fragmentId && cfg.fragmentUpdate) {
-                    updateArray.push(cfg.fragmentId);
-                }
                 if(updateArray.length > 0) {
                     PrimeFaces.ajax.Request.addParam(postParams, PrimeFaces.PARTIAL_UPDATE_PARAM, updateArray.join(' '), parameterPrefix);
                 }
@@ -537,7 +533,7 @@ if (!PrimeFaces.ajax) {
                             $(document).trigger('pfAjaxSend', [xhr, this]);
                         }
                     },
-                    error: function(xhr, status, errorThrown) {
+                    fail: function(xhr, status, errorThrown) {
                         if(cfg.onerror) {
                             cfg.onerror.call(this, xhr, status, errorThrown);
                         }
@@ -551,7 +547,7 @@ if (!PrimeFaces.ajax) {
 
                         PrimeFaces.error('Request return with error:' + status + '.');
                     },
-                    success: function(data, status, xhr) {
+                    done: function(data, status, xhr) {
                         PrimeFaces.debug('Response received succesfully.');
 
                         var parsed;
@@ -580,13 +576,16 @@ if (!PrimeFaces.ajax) {
 
                         PrimeFaces.debug('DOM is updated.');
                     },
-                    complete: function(xhr, status) {
-                        if(cfg.oncomplete) {
-                            cfg.oncomplete.call(this, xhr, status, xhr.pfArgs);
-                        }
+                    always: function(xhr, status) {
 
+                        // first call the extension callback (e.g. datatable paging)
                         if(cfg.ext && cfg.ext.oncomplete) {
                             cfg.ext.oncomplete.call(this, xhr, status, xhr.pfArgs);
+                        }
+
+                        // after that, call the endusers callback, which should be called when everything is ready
+                        if(cfg.oncomplete) {
+                            cfg.oncomplete.call(this, xhr, status, xhr.pfArgs);
                         }
 
                         if(global) {
@@ -602,6 +601,11 @@ if (!PrimeFaces.ajax) {
                         }
                     }
                 };
+
+                // TODO remove when updating to jQuery 3
+                xhrOptions.success = xhrOptions.done;
+                xhrOptions.error = xhrOptions.fail;
+                xhrOptions.complete = xhrOptions.always;
 
                 if (cfg.timeout) {
                     xhrOptions['timeout'] = cfg.timeout;
@@ -907,7 +911,7 @@ if (!PrimeFaces.ajax) {
         }
     };
 
-    $(window).unload(function() {
+    $(window).on('beforeunload', function() {
         PrimeFaces.ajax.Queue.abortAll();
     });
 

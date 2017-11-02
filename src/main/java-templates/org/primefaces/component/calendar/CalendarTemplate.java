@@ -5,6 +5,7 @@ import org.primefaces.util.HTML;
 import org.primefaces.util.ArrayUtils;
 import org.primefaces.util.Constants;
 import org.primefaces.util.ComponentUtils;
+import org.primefaces.util.LocaleUtils;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.HashMap;
@@ -28,8 +29,8 @@ import org.primefaces.convert.DateTimeConverter;
     public final static String MOBILE_POPUP_CONTAINER_CLASS = "ui-calendar ui-calendar-popup";
     public final static String MOBILE_INLINE_CONTAINER_CLASS = "ui-calendar ui-calendar-inline";
 
-    private static final Collection<String> EVENT_NAMES = Collections.unmodifiableCollection(Arrays.asList("blur","change","valueChange","click","dblclick","focus","keydown","keypress","keyup","mousedown","mousemove","mouseout","mouseover","mouseup","select","dateSelect","viewChange"));
-    private static final Collection<String> UNOBSTRUSIVE_EVENT_NAMES = Collections.unmodifiableCollection(Arrays.asList("dateSelect","viewChange"));
+    private static final Collection<String> EVENT_NAMES = Collections.unmodifiableCollection(Arrays.asList("blur","change","valueChange","click","dblclick","focus","keydown","keypress","keyup","mousedown","mousemove","mouseout","mouseover","mouseup","select","dateSelect","viewChange","close"));
+    private static final Collection<String> UNOBSTRUSIVE_EVENT_NAMES = Collections.unmodifiableCollection(Arrays.asList("dateSelect","viewChange","close"));
 
     private Map<String,AjaxBehaviorEvent> customEvents = new HashMap<String,AjaxBehaviorEvent>();
 
@@ -37,19 +38,8 @@ import org.primefaces.convert.DateTimeConverter;
 	private java.util.TimeZone appropriateTimeZone;
 	
 	public java.util.Locale calculateLocale(FacesContext facesContext) {
-		if(calculatedLocale == null) {
-			Object userLocale = getLocale();
-			if(userLocale != null) {
-				if(userLocale instanceof String) {
-					calculatedLocale = ComponentUtils.toLocale((String) userLocale);
-				}
-				else if(userLocale instanceof java.util.Locale)
-					calculatedLocale = (java.util.Locale) userLocale;
-				else
-					throw new IllegalArgumentException("Type:" + userLocale.getClass() + " is not a valid locale type for calendar:" + this.getClientId(facesContext));
-			} else {
-				calculatedLocale = facesContext.getViewRoot().getLocale();
-			}
+		if (calculatedLocale == null) {
+	       calculatedLocale = LocaleUtils.resolveLocale(getLocale(), this.getClientId(facesContext));
 		}
 		
 		return calculatedLocale;
@@ -106,6 +96,9 @@ import org.primefaces.convert.DateTimeConverter;
             if(eventName != null) {
                 if(eventName.equals("dateSelect")) {
                     customEvents.put("dateSelect", (AjaxBehaviorEvent) event);
+                }
+                else if(eventName.equals("close")) {
+                    customEvents.put("close", (AjaxBehaviorEvent) event);
                 }
                 else if(eventName.equals("viewChange")) {
                     int month = Integer.parseInt(params.get(clientId + "_month"));

@@ -224,6 +224,7 @@
     zoom: 1;
     cursor: pointer;
     padding-right: 2em;
+    vertical-align: top;
 }
 
 .ui-selectonemenu .ui-selectonemenu-trigger {
@@ -617,7 +618,6 @@ button.ui-button::-moz-focus-inner {
 }
 
 .ui-splitbutton .ui-button.ui-splitbutton-menubutton {
-    width: 32px;
     position: absolute;
     top: 0px;
     margin-left: -1px;
@@ -697,6 +697,16 @@ div.ui-button, .ui-splitbutton {
 /** InputText **/
 .ui-fluid .ui-inputtext {
     width: 100%;
+}
+
+/** InputNumber **/
+.ui-fluid .ui-inputnumber {
+    width: 100%;
+}
+
+.ui-fluid .ui-inputtext[size],
+.ui-fluid .ui-inputfield[size] {
+    width: auto;
 }
 
 /** InputTextarea **/
